@@ -22,41 +22,51 @@ Partial Class Form1
     'Do not modify it using the code editor.
     <System.Diagnostics.DebuggerStepThrough()> _
     Private Sub InitializeComponent()
-        Me.txtOutput = New System.Windows.Forms.TextBox()
+        Me.txtInput = New System.Windows.Forms.TextBox()
         Me.Button1 = New System.Windows.Forms.Button()
+        Me.btnSubmit = New System.Windows.Forms.Button()
         Me.SuspendLayout()
         '
-        'txtOutput
+        'txtInput
         '
-        Me.txtOutput.Location = New System.Drawing.Point(12, 12)
-        Me.txtOutput.Multiline = True
-        Me.txtOutput.Name = "txtOutput"
-        Me.txtOutput.Size = New System.Drawing.Size(930, 496)
-        Me.txtOutput.TabIndex = 0
+        Me.txtInput.Location = New System.Drawing.Point(12, 12)
+        Me.txtInput.Name = "txtInput"
+        Me.txtInput.Size = New System.Drawing.Size(297, 20)
+        Me.txtInput.TabIndex = 0
         '
         'Button1
         '
-        Me.Button1.Location = New System.Drawing.Point(433, 514)
+        Me.Button1.Location = New System.Drawing.Point(12, 38)
         Me.Button1.Name = "Button1"
         Me.Button1.Size = New System.Drawing.Size(75, 23)
         Me.Button1.TabIndex = 1
         Me.Button1.Text = "Connect"
         Me.Button1.UseVisualStyleBackColor = True
         '
+        'btnSubmit
+        '
+        Me.btnSubmit.Location = New System.Drawing.Point(234, 38)
+        Me.btnSubmit.Name = "btnSubmit"
+        Me.btnSubmit.Size = New System.Drawing.Size(75, 23)
+        Me.btnSubmit.TabIndex = 2
+        Me.btnSubmit.Text = "Submit"
+        Me.btnSubmit.UseVisualStyleBackColor = True
+        '
         'Form1
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
-        Me.ClientSize = New System.Drawing.Size(954, 541)
+        Me.ClientSize = New System.Drawing.Size(327, 72)
+        Me.Controls.Add(Me.btnSubmit)
         Me.Controls.Add(Me.Button1)
-        Me.Controls.Add(Me.txtOutput)
+        Me.Controls.Add(Me.txtInput)
         Me.Name = "Form1"
         Me.Text = "Form1"
         Me.ResumeLayout(False)
         Me.PerformLayout()
 
     End Sub
-    Friend WithEvents txtOutput As System.Windows.Forms.TextBox
+    Friend WithEvents txtInput As System.Windows.Forms.TextBox
     Friend WithEvents Button1 As System.Windows.Forms.Button
-
+    Friend WithEvents btnSubmit As Button
 End Class
