@@ -22,21 +22,23 @@ Partial Class Form1
     'Do not modify it using the code editor.
     <System.Diagnostics.DebuggerStepThrough()> _
     Private Sub InitializeComponent()
-        Me.txtInput = New System.Windows.Forms.TextBox()
+        Me.txOutput = New System.Windows.Forms.TextBox()
         Me.Button1 = New System.Windows.Forms.Button()
         Me.btnSubmit = New System.Windows.Forms.Button()
+        Me.dgvInput = New System.Windows.Forms.DataGridView()
+        CType(Me.dgvInput, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.SuspendLayout()
         '
-        'txtInput
+        'txOutput
         '
-        Me.txtInput.Location = New System.Drawing.Point(12, 12)
-        Me.txtInput.Name = "txtInput"
-        Me.txtInput.Size = New System.Drawing.Size(297, 20)
-        Me.txtInput.TabIndex = 0
+        Me.txOutput.Location = New System.Drawing.Point(12, 12)
+        Me.txOutput.Name = "txOutput"
+        Me.txOutput.Size = New System.Drawing.Size(297, 20)
+        Me.txOutput.TabIndex = 0
         '
         'Button1
         '
-        Me.Button1.Location = New System.Drawing.Point(12, 38)
+        Me.Button1.Location = New System.Drawing.Point(12, 537)
         Me.Button1.Name = "Button1"
         Me.Button1.Size = New System.Drawing.Size(75, 23)
         Me.Button1.TabIndex = 1
@@ -45,28 +47,39 @@ Partial Class Form1
         '
         'btnSubmit
         '
-        Me.btnSubmit.Location = New System.Drawing.Point(234, 38)
+        Me.btnSubmit.Location = New System.Drawing.Point(315, 10)
         Me.btnSubmit.Name = "btnSubmit"
         Me.btnSubmit.Size = New System.Drawing.Size(75, 23)
         Me.btnSubmit.TabIndex = 2
         Me.btnSubmit.Text = "Submit"
         Me.btnSubmit.UseVisualStyleBackColor = True
         '
+        'dgvInput
+        '
+        Me.dgvInput.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize
+        Me.dgvInput.Location = New System.Drawing.Point(13, 39)
+        Me.dgvInput.Name = "dgvInput"
+        Me.dgvInput.Size = New System.Drawing.Size(784, 478)
+        Me.dgvInput.TabIndex = 3
+        '
         'Form1
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
-        Me.ClientSize = New System.Drawing.Size(327, 72)
+        Me.ClientSize = New System.Drawing.Size(821, 572)
+        Me.Controls.Add(Me.dgvInput)
         Me.Controls.Add(Me.btnSubmit)
         Me.Controls.Add(Me.Button1)
-        Me.Controls.Add(Me.txtInput)
+        Me.Controls.Add(Me.txOutput)
         Me.Name = "Form1"
         Me.Text = "Form1"
+        CType(Me.dgvInput, System.ComponentModel.ISupportInitialize).EndInit()
         Me.ResumeLayout(False)
         Me.PerformLayout()
 
     End Sub
-    Friend WithEvents txtInput As System.Windows.Forms.TextBox
+    Friend WithEvents txOutput As System.Windows.Forms.TextBox
     Friend WithEvents Button1 As System.Windows.Forms.Button
     Friend WithEvents btnSubmit As Button
+    Friend WithEvents dgvInput As System.Windows.Forms.DataGridView
 End Class

@@ -9,31 +9,16 @@ Imports System.Collections.Concurrent
 Public Class Form1
 
     Private ircTrd As Thread
-    Public Class TaskInfo
-        Public str As String
-        Public Sub New(text As String)
-            str = text
-        End Sub
-    End Class
 
     Private Sub Button1_Click(sender As Object, e As EventArgs) Handles Button1.Click
-
-        ircTrd = New Thread(AddressOf Connect)
+        ircTrd = New Thread(AddressOf Main)
         ircTrd.IsBackground = True
         ircTrd.Start()
     End Sub
 
-
-    Private Shared ircQueue As New ConcurrentQueue(Of String)()
+    Private WithEvents refTimer As New System.Windows.Forms.Timer()
+    Private Shared ircQueue As New List(Of String)
     Private Shared syncObj = New Object
-
-    Private _sServer As String = "dscm.wulf2k.ca"
-    Private _sChannel As String = "#DSCM_test"
-    Private _sNickName As String = "DSCM-0110000112345678"
-    Private _lPort As Int32 = 8123 '-- the port to connect to.  Default is 6667
-    Private _bInvisible As Boolean = False '-- shows up as an invisible user.  Still working on this.
-    Private _sRealName As String = "DSCMbot" '-- More naming
-    Private _sUserName As String = "DSCMbot" '-- Unique name so of the IRC network has a unique handle to you regardless of the nickname.
 
     Private _tcpclientConnection As TcpClient = Nothing '-- main connection to the IRC network.
     Private _networkStream As NetworkStream = Nothing '-- break that connection down to a network stream.
@@ -41,139 +26,95 @@ Public Class Form1
 
     Private _streamReader As StreamReader = Nothing '-- provide a convenient access to reading commands.
 
+    Private Shared input
+    Private Shared output
 
-    Public Sub output(str As String)
-        Console.WriteLine(str)
-    End Sub
-
-    Public Sub Connect()
-        '-- Heads up - when sending a command you need to flush the writer each time.  That's key.
-        Dim sIsInvisible As String = String.Empty
-        Dim sCommand As String = String.Empty '-- commands to process from the room.
-
-
-
-        '-- objects used for the IDENT response.
-        Dim identListener As TcpListener = Nothing
-        Dim identClient As TcpClient = Nothing
-        Dim identNetworkStream As NetworkStream = Nothing
-        Dim identStreamReader As StreamReader = Nothing
-        Dim identStreamWriter As StreamWriter = Nothing
-        Dim identResponseString As String = String.Empty
-
-        Try
-            '-- Start the main connection to the IRC server.
-            output("**Creating Connection**")
-            _tcpclientConnection = New TcpClient(_sServer, _lPort)
-            _networkStream = _tcpclientConnection.GetStream
-            _streamReader = New StreamReader(_networkStream)
-            _streamWriter = New StreamWriter(_networkStream)
-
-            '-- Yeah, questionable if this works all the time.
-            If _bInvisible Then
-                sIsInvisible = 8
-            Else
-                sIsInvisible = 0
+    Private Sub refTimer_Tick() Handles refTimer.Tick
+        If ircQueue.Count > 0 Then
+            dgvInput.Rows.Add(ircQueue(0))
+            ircQueue.Remove(ircQueue(0))
+            If dgvInput.Rows.Count > 20 Then
+                dgvInput.Rows.Remove(dgvInput.Rows(0))
             End If
-
-            '-- Send in your information
-            output("**Setting up name**")
-            _streamWriter.WriteLine(String.Format("USER {0} {1} * :{2}", _sUserName, sIsInvisible, _sRealName))
-            _streamWriter.Flush()
-
-            '-- Create your nickname.
-            output("**Setting Nickname**")
-            _streamWriter.WriteLine(String.Format(String.Format("NICK {0}", _sNickName)))
-            _streamWriter.Flush()
-
-            '-- Tell the server you want to connect to a specific room.
-            output("**Joining Room**")
-            _streamWriter.WriteLine(String.Format("JOIN {0}", _sChannel))
-            _streamWriter.Flush()
-
-
-            While True
-
-                Dim str As String = ""
-                output(ircQueue.TryDequeue(str))
-                If Not str = "" Then MsgBox(str)
-
-
-
-                sCommand = _streamReader.ReadLine
-                output(sCommand)
-
-                '-- Not the best method but for the time being it works. 
-                '--
-                '-- Example of a command it picks up
-                ' :nodi123!nodi12312@ipxxx-xx.net PRIVMSG #nodi123_test :? hola!
-
-                Dim sCommandParts(sCommand.Split(" ").Length) As String
-                sCommandParts = sCommand.Split(" ")
-
-                If sCommandParts(0) = "PING" Then
-                    Dim sPing As String = String.Empty
-                    For i As Int32 = 1 To sCommandParts.Length - 1
-                        sPing += sCommandParts(i) + " "
-                    Next
-                    _streamWriter.WriteLine("PONG " + sPing)
-                    _streamWriter.Flush()
-                    output("PONG " + sPing)
-                End If
-
-                '-- With my jank split command we want to look for specific commands sent and react to them!
-                '-- In theory this should be dumped to a method, but for this small tutorial you can see them here.
-                '-- Also any user can input this.  If you want to respond to commands from you only you would
-                '-- have to extend the program to look for your non-bot-id in the sCommandParts(0)
-                If sCommandParts.Length >= 4 Then
-                    '-- If a statement is proceeded by a question mark (the semi colon's there automatically)
-                    '-- then repeat the rest of the string!
-                    If sCommandParts(3).StartsWith(":?") Then
-                        Dim sVal As String = String.Empty
-                        Dim sOut As String = String.Empty
-                        '-- the text might have other spaces in them so concatenate the rest of the parts
-                        '-- because it's all text.
-                        For i As Int32 = 3 To sCommandParts.Length - 1
-                            sVal += sCommandParts(i)
-                            sVal += " "
-                        Next
-                        '-- remove the :? part.
-                        sVal = sVal.Substring(2, sVal.Length - 2)
-                        '-- Trim for good measure.
-                        sVal = sVal.Trim
-                        '-- Send the text back out.  The format is they command to send the text and the room you are in.
-                        sOut = String.Format("PRIVMSG {0} : You said '{1}'", _sChannel, sVal)
-                        _streamWriter.WriteLine(sOut)
-                        _streamWriter.Flush()
-                    End If
-                    '-- If you don't quit the bot correctly the connection will be active until a ping/pong is failed. 
-                    '-- Even if your programming isn't running!
-                    '-- To stop that here's a command to have the bot quit!
-                    If sCommandParts(3).Contains(":!Q") Then
-                        ' Stop
-                        _streamWriter.WriteLine("QUIT")
-                        _streamWriter.Flush()
-                        Exit Sub
-                    End If
-                End If
-            End While
-
-        Catch ex As Exception
-            '-- Any exception quits the bot gracefully.
-            output("Error in Connecting.  " + ex.Message)
-            _streamWriter.WriteLine("QUIT")
-            _streamWriter.Flush()
-        Finally
-            '-- close your connections
-            _streamReader.Dispose()
-            _streamWriter.Dispose()
-            _networkStream.Dispose()
-        End Try
+        End If
 
     End Sub
 
     Private Sub btnSubmit_Click(sender As Object, e As EventArgs) Handles btnSubmit.Click
-        ircQueue.Enqueue(txtInput.Text)
+        output.Write(txOutput.Text & vbCr & vbLf)
+        output.Flush()
     End Sub
 
+    Public Shared Sub Main(args As String())
+        Dim port As Integer
+        Dim buf As String, nick As String, owner As String, server As String, chan As String
+        Dim sock As New System.Net.Sockets.TcpClient()
+        'Dim input As System.IO.TextReader
+        'Dim output As System.IO.TextWriter
+
+        'Get nick, owner, server, port, and channel from user
+        nick = "DSCM-0110test"
+        owner = "DSCM"
+        server = "dscm.wulf2k.ca"
+        port = 8123
+        chan = "#DSCM_Test"
+
+        'Connect to irc server and get input and output text streams from TcpClient.
+        sock.Connect(server, port)
+        If Not sock.Connected Then
+            Console.WriteLine("Failed to connect!")
+            Return
+        End If
+        input = New System.IO.StreamReader(sock.GetStream())
+        output = New System.IO.StreamWriter(sock.GetStream())
+
+        'Starting USER and NICK login commands 
+        output.Write("USER " & nick & " 0 * :" & owner & vbCr & vbLf & "NICK " & nick & vbCr & vbLf)
+        output.Flush()
+
+        output.Write("MODE " & nick & " +B" & vbCr & vbLf)
+        output.Flush()
+
+
+        output.Write("JOIN #DSCM_Test" & vbCr & vbLf)
+        output.Flush()
+
+        'Process each line received from irc server
+        While True
+            buf = input.ReadLine()
+            'Display received irc message
+
+
+
+            If Not buf Is Nothing Then
+                Console.WriteLine(buf)
+                ircQueue.Add(buf)
+
+
+                'Send pong reply to any ping messages
+                If buf.StartsWith("PING ") Then
+                    output.Write(buf.Replace("PING", "PONG") & vbCr & vbLf)
+                    output.Flush()
+                End If
+
+                If buf(0) <> ":"c Then
+                    'Continue While
+                End If
+            End If
+        End While
+    End Sub
+
+    Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        dgvInput.Columns.Add("text", "Text")
+        dgvInput.Columns(0).Width = 700
+        dgvInput.Font = New Font("Consolas", 10)
+
+
+        refTimer = New System.Windows.Forms.Timer
+        refTimer.Interval = 200
+        refTimer.Enabled = True
+        refTimer.Start()
+    End Sub
 End Class
+
+
