@@ -16,20 +16,19 @@ Public Class Form1
         ircTrd.Start()
     End Sub
 
-    Private WithEvents refTimer As New System.Windows.Forms.Timer()
+    Private WithEvents ircTimer As New System.Windows.Forms.Timer()
     Private Shared ircQueue As New List(Of String)
-    Private Shared syncObj = New Object
 
-    Private _tcpclientConnection As TcpClient = Nothing '-- main connection to the IRC network.
-    Private _networkStream As NetworkStream = Nothing '-- break that connection down to a network stream.
-    Private _streamWriter As StreamWriter = Nothing '-- provide a convenient access to writing commands.
+    Private _tcpclientConnection As TcpClient = Nothing
+    Private _networkStream As NetworkStream = Nothing
+    Private _streamWriter As StreamWriter = Nothing
+    Private _streamReader As StreamReader = Nothing
 
-    Private _streamReader As StreamReader = Nothing '-- provide a convenient access to reading commands.
-
+    Private Shared ircOnline As Boolean = False
     Private Shared input
     Private Shared output
 
-    Private Sub refTimer_Tick() Handles refTimer.Tick
+    Private Sub ircTimer_Tick() Handles ircTimer.Tick
         If ircQueue.Count > 0 Then
             dgvInput.Rows.Add(ircQueue(0))
             ircQueue.Remove(ircQueue(0))
@@ -49,10 +48,7 @@ Public Class Form1
         Dim port As Integer
         Dim buf As String, nick As String, owner As String, server As String, chan As String
         Dim sock As New System.Net.Sockets.TcpClient()
-        'Dim input As System.IO.TextReader
-        'Dim output As System.IO.TextWriter
 
-        'Get nick, owner, server, port, and channel from user
         nick = "DSCM-0110test"
         owner = "DSCM"
         server = "dscm.wulf2k.ca"
@@ -68,23 +64,41 @@ Public Class Form1
         input = New System.IO.StreamReader(sock.GetStream())
         output = New System.IO.StreamWriter(sock.GetStream())
 
-        'Starting USER and NICK login commands 
+        'USER and NICK login commands 
         output.Write("USER " & nick & " 0 * :" & owner & vbCr & vbLf & "NICK " & nick & vbCr & vbLf)
         output.Flush()
 
         output.Write("MODE " & nick & " +B" & vbCr & vbLf)
         output.Flush()
 
+        ircOnline = False
 
-        output.Write("JOIN #DSCM_Test" & vbCr & vbLf)
-        output.Flush()
+        'Join channel on start
+        While Not ircOnline
+            buf = input.ReadLine()
+            If Not buf Is Nothing Then
+                Console.WriteLine(buf)
+                ircQueue.Add(buf)
+
+                If buf.StartsWith("PING ") Then
+                    output.Write(buf.Replace("PING", "PONG") & vbCr & vbLf)
+                    output.Flush()
+                End If
+
+
+                If buf.Contains(":MOTD") Then
+                    output.write("JOIN " & chan & vbCr & vbLf)
+                    output.flush()
+                    ircOnline = True
+                End If
+            End If
+        End While
+
 
         'Process each line received from irc server
-        While True
+        While ircOnline
             buf = input.ReadLine()
             'Display received irc message
-
-
 
             If Not buf Is Nothing Then
                 Console.WriteLine(buf)
@@ -97,8 +111,31 @@ Public Class Form1
                     output.Flush()
                 End If
 
-                If buf(0) <> ":"c Then
-                    'Continue While
+
+                'Parse report commands
+                If buf.Contains("REPORT|") Then
+                    Dim tmpName As String
+                    Dim tmpSteamID As String
+                    Dim tmpSL As Integer
+                    Dim tmpPhantom As String
+                    Dim tmpMPZone As Integer
+                    Dim tmpWorld As String
+
+                    Dim tmpFields()
+
+                    Dim tmpReport As String
+                    tmpReport = buf.Split("|")(1)
+
+                    tmpFields = tmpReport.Split(",")
+
+
+
+                    tmpName = tmpFields(0)
+                    tmpSteamID = tmpFields(1)
+                    tmpSL = tmpFields(2)
+                    tmpPhantom = tmpFields(3)
+                    tmpMPZone = tmpFields(4)
+                    tmpWorld = tmpFields(5)
                 End If
             End If
         End While
@@ -110,10 +147,10 @@ Public Class Form1
         dgvInput.Font = New Font("Consolas", 10)
 
 
-        refTimer = New System.Windows.Forms.Timer
-        refTimer.Interval = 200
-        refTimer.Enabled = True
-        refTimer.Start()
+        ircTimer = New System.Windows.Forms.Timer
+        ircTimer.Interval = 200
+        ircTimer.Enabled = True
+        ircTimer.Start()
     End Sub
 End Class
 
